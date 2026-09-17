@@ -22,7 +22,7 @@ export const registerRequest = async (userData) => {
 
 
 // --- NUEVA CONEXIÓN AL BACKEND REAL PARA TAREAS ---
-const API_URL = 'https://remindmebackend.onrender.com/';
+const API_URL = 'https://remindmebackend.onrender.com/api/tasks';
 
 export const getTasksRequest = async () => {
   const response = await fetch(API_URL);
