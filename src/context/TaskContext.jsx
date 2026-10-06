@@ -1,59 +1,83 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
+import { AuthContext } from './AuthContext'; // <--- Importamos el AuthContext
 import { 
-  getTasksRequest, 
-  createTaskRequest, 
-  deleteTaskRequest, 
-  updateTaskRequest 
-} from '../api';
+  getTasksService, 
+  createTaskService, 
+  updateTaskService, 
+  deleteTaskService 
+} from '../services/taskService';
 
 export const TaskContext = createContext();
 
 export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Obtenemos el token o el usuario del AuthContext
+  const { token } = useContext(AuthContext);
 
-  // Cargar tareas desde el backend al iniciar
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = await getTasksRequest();
-        setTasks(data);
-      } catch (error) {
-        console.error("Error cargando tareas:", error);
-      }
-    };
-    fetchTasks();
-  }, []);
+  const fetchTasks = async () => {
+    // Si no hay token, ni nos molestamos en llamar a la API
+    if (!token) {
+      setTasks([]);
+      return;
+    }
 
-  const addTask = async (taskData) => {
+    setLoading(true);
     try {
-      const newTask = await createTaskRequest(taskData);
-      setTasks([...tasks, newTask]); // Agregamos la tarea devuelta por MongoDB
-    } catch (error) {
-      console.error("Error al crear tarea:", error);
+      const data = await getTasksService();
+      setTasks(data);
+      setError(null);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al cargar las tareas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cada vez que el token cambie (ej: cuando el usuario hace login), ¡cargamos las tareas de ese usuario!
+  useEffect(() => {
+    fetchTasks();
+  }, [token]);
+
+  // Resto de tus funciones (addTask, updateTask, deleteTask) se quedan igual...
+  const addTask = async (newTaskData) => {
+    try {
+      const createdTask = await createTaskService(newTaskData);
+      setTasks((prev) => [...prev, createdTask]);
+    } catch (err) {
+      console.error('Error creando tarea:', err);
+      throw err;
+    }
+  };
+
+  const updateTask = async (id, updatedData) => {
+    try {
+      const updatedTask = await updateTaskService(id, updatedData);
+      setTasks((prev) =>
+        prev.map((t) => (t._id === id || t.id === id ? updatedTask : t))
+      );
+    } catch (err) {
+      console.error('Error actualizando tarea:', err);
+      throw err;
     }
   };
 
   const deleteTask = async (id) => {
     try {
-      await deleteTaskRequest(id);
-      // Filtramos usando _id porque ahora viene de MongoDB
-      setTasks(tasks.filter(task => task._id !== id)); 
-    } catch (error) {
-      console.error("Error al eliminar tarea:", error);
-    }
-  };
-
-  const updateTask = async (id, updatedTask) => {
-    try {
-      const savedTask = await updateTaskRequest(id, updatedTask);
-      setTasks(tasks.map(task => (task._id === id ? savedTask : task)));
-    } catch (error) {
-      console.error("Error al actualizar tarea:", error);
+      await deleteTaskService(id);
+      setTasks((prev) => prev.filter((t) => t._id !== id && t.id !== id));
+    } catch (err) {
+      console.error('Error eliminando tarea:', err);
+      throw err;
     }
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, addTask, deleteTask, updateTask }}>
+    <TaskContext.Provider 
+      value={{ tasks, loading, error, fetchTasks, addTask, updateTask, deleteTask }}
+    >
       {children}
     </TaskContext.Provider>
   );

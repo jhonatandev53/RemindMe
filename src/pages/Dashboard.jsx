@@ -1,203 +1,195 @@
-import { useState, useContext } from 'react';
-import { TaskContext } from '../context/TaskContext'; 
+import { useContext, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { TaskContext } from "../context/TaskContext";
+import { AuthContext } from "../context/AuthContext";
+import { TaskCard } from "../components/TaskCard";
+import { TaskSkeleton } from "../components/TaskSkeleton";
+import { TaskFilterBar } from "../components/TaskFilterBar";
+import { NoSearchResults } from "../components/NoSearchResults";
+import { EmptyDashboardTasks } from "../components/EmptyDashboardTasks";
+import { Panel } from "../components/Panel";
+import { UserAvatar } from "../components/UserAvatar";
+import { WelcomeGreeting } from "../components/WelcomeGreeting";
+import { CurrentTimeWidget } from "../components/CurrentTimeWidget"; // <--- Nuestro widget de fecha y hora
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Dashboard = () => {
-  const { tasks, deleteTask, updateTask } = useContext(TaskContext);
+  const navigate = useNavigate();
+  const { tasks, loading } = useContext(TaskContext);
+  const { user } = useContext(AuthContext);
 
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: '', date: '', time: '', description: '' });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
 
-  const handleStartEdit = (task) => {
-    setEditingId(task._id);
-    setEditForm({ title: task.title, date: task.date, time: task.time, description: task.description });
-  };
+  const pendingTasks = tasks.filter((task) => !task.completed);
 
-  const handleEditChange = (e) => {
-    setEditForm({
-      ...editForm,
-      [e.target.name]: e.target.value
+  const filteredAndSortedTasks = pendingTasks
+    .filter((task) => {
+      const matchesSearch = 
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date || a.createdAt || 0);
+      const dateB = new Date(b.date || b.createdAt || 0);
+
+      if (sortBy === "newest") return dateB - dateA;
+      if (sortBy === "oldest") return dateA - dateB;
+      if (sortBy === "az") return a.title.localeCompare(b.title);
+      if (sortBy === "za") return b.title.localeCompare(a.title);
+      return 0;
     });
-  };
-
-  const handleSaveEdit = (id) => {
-    updateTask(id, editForm);
-    setEditingId(null); 
-  };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 pt-6 md:pt-6">
       
-      {/* Header Superior del Dashboard */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Mis Recordatorios
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Organiza tus tareas y potencia tu productividad.
-          </p>
-        </div>
-
-        {/* Tarjeta de usuario */}
-        <div className="flex items-center gap-3 bg-white py-2 px-4 rounded-2xl shadow-sm border border-slate-200/80">
-          <div className="w-9 h-9 rounded-xl bg-[#FFC50C] flex items-center justify-center font-black text-slate-900 shadow-sm">
-            JD
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-bold text-slate-800 leading-tight">Jhonatan</p>
-            <p className="text-[11px] text-slate-400 font-semibold">Usuario Pro</p>
-          </div>
-        </div>
-      </header>
-
-      {/* Resumen */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-800">Panel de Tareas</h2>
-          <p className="text-slate-500 text-sm mt-0.5">
-            Tienes <span className="font-bold text-[#FFC50C]">{tasks.length}</span> {tasks.length === 1 ? 'tarea registrada' : 'tareas registradas'}
-          </p>
-        </div>
-      </div>
-
-      {/* Lista / Grid de Tareas */}
-      {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-slate-200 text-center">
-          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 text-[#FFC50C]">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-1">¡Todo al día!</h3>
-          <p className="text-slate-500 text-sm max-w-sm">No tienes tareas pendientes. ¡Crea una para organizar tu día!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tasks.map((task) => (
-            <div 
-              key={task._id} 
-              className="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-            >
-              {editingId === task._id ? (
-                /* MODO EDICIÓN */
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-[#FFC50C] text-xs font-extrabold uppercase tracking-wider">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Editando Tarea
-                  </div>
-                  
-                  <input 
-                    type="text" 
-                    name="title" 
-                    value={editForm.title} 
-                    onChange={handleEditChange} 
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#FFC50C] text-sm font-semibold text-slate-800"
-                  />
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <input 
-                      type="date" 
-                      name="date" 
-                      value={editForm.date} 
-                      onChange={handleEditChange} 
-                      className="px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#FFC50C] text-xs font-medium text-slate-700"
-                    />
-                    <input 
-                      type="time" 
-                      name="time" 
-                      value={editForm.time} 
-                      onChange={handleEditChange} 
-                      className="px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#FFC50C] text-xs font-medium text-slate-700"
-                    />
-                  </div>
-
-                  <textarea 
-                    name="description" 
-                    value={editForm.description} 
-                    onChange={handleEditChange} 
-                    rows="3"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#FFC50C] text-sm text-slate-700 resize-none"
-                  />
-
-                  <div className="flex gap-2 pt-2">
-                    <button 
-                      onClick={() => handleSaveEdit(task._id)} 
-                      className="flex-1 bg-[#FFC50C] hover:bg-amber-400 text-slate-900 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer shadow-sm"
-                    >
-                      Guardar
-                    </button>
-                    <button 
-                      onClick={() => setEditingId(null)} 
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* VISTA NORMAL */
-                <div className="flex flex-col h-full justify-between">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-slate-800 mb-3 leading-snug">
-                      {task.title}
-                    </h3>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {task.date && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
-                          <svg className="w-3.5 h-3.5 text-[#FFC50C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {task.date}
-                        </span>
-                      )}
-                      {task.time && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
-                          <svg className="w-3.5 h-3.5 text-[#FFC50C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {task.time}
-                        </span>
-                      )}
-                    </div>
-
-                    {task.description && (
-                      <p className="text-slate-500 text-sm leading-relaxed mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-100 italic">
-                        "{task.description}"
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-4 border-t border-slate-100 mt-2">
-                    <button 
-                      onClick={() => handleStartEdit(task)} 
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors cursor-pointer border border-amber-200/50"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Editar
-                    </button>
-                    
-                    <button 
-                      onClick={() => deleteTask(task._id)} 
-                      className="flex items-center justify-center p-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-colors cursor-pointer border border-red-100"
-                      title="Eliminar tarea"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
+      {/* BANNER SUPERIOR RESPONSIVO */}
+      <Panel className="p-4 sm:p-6 rounded-2xl shadow-sm mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 lg:gap-6">
+        
+        {/* =================================================== */}
+        {/* VISTA MÓVIL (Visible solo en pantallas pequeñas < lg) */}
+        {/* =================================================== */}
+        <div className="flex flex-col gap-4 lg:hidden w-full">
+          {/* Fila superior móvil: Título y Avatar */}
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white">Panel de Tareas</h2>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                Tienes{" "}
+                <span className="font-extrabold text-[#FFC50C]">
+                  {loading ? "..." : pendingTasks.length}
+                </span>{" "}
+                {pendingTasks.length === 1 ? "tarea pendiente" : "tareas pendientes"}
+              </p>
             </div>
-          ))}
+
+            <button
+              onClick={() => navigate('/profile')}
+              className="group relative flex items-center p-2 rounded-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shadow-xs shrink-0 cursor-pointer"
+              title="Ir a mi perfil"
+            >
+              <UserAvatar user={user} size="small" />
+            </button>
+          </div>
+
+          {/* Fila inferior móvil: Reloj Calendario centrado y ordenado */}
+          <div className="flex justify-center w-full pt-1">
+            <CurrentTimeWidget />
+          </div>
+        </div>
+
+        {/* =================================================== */}
+        {/* VISTA ESCRITORIO (Visible solo en lg o superior)     */}
+        {/* =================================================== */}
+        
+        {/* 1. IZQUIERDA: Título y contador (Escritorio) */}
+        <div className="hidden lg:block">
+          <h2 className="text-2xl font-black text-slate-800 dark:text-white">Panel de Tareas</h2>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+            Tienes{" "}
+            <span className="font-extrabold text-[#FFC50C]">
+              {loading ? "..." : pendingTasks.length}
+            </span>{" "}
+            {pendingTasks.length === 1 ? "tarea pendiente" : "tareas pendientes"}
+          </p>
+        </div>
+
+        {/* 2. CENTRO: Mensaje de bienvenida flotante */}
+        <div className="w-full lg:w-auto flex justify-center">
+          <WelcomeGreeting />
+        </div>
+
+        {/* 3. DERECHA: Reloj local y Botón de perfil completo (Escritorio) */}
+        <div className="hidden lg:flex items-center gap-3 shrink-0">
+          <CurrentTimeWidget />
+          
+          <button
+            onClick={() => navigate('/profile')}
+            className="group relative flex items-center gap-3 p-1.5 pr-4 rounded-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 hover:border-sky-500/50 hover:bg-sky-500/5 transition-all duration-200 cursor-pointer shadow-xs shrink-0"
+            title="Ir a mi perfil"
+          >
+            <UserAvatar user={user} size="small" />
+            
+            <div className="text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+                Mi Cuenta
+              </span>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-sky-500 transition-colors">
+                {user?.name || 'Perfil'}
+              </span>
+            </div>
+
+            <svg className="w-4 h-4 text-slate-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transition-all ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </Panel>
+
+      <TaskFilterBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
+
+      {loading ? (
+        <div className="flex flex-col gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/50 backdrop-blur-md rounded-2xl p-4 flex items-center justify-center gap-3 shadow-sm"
+          >
+            <div className="w-8 h-8 rounded-xl bg-[#FFC50C] flex items-center justify-center shadow-md animate-spin">
+              <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <p className="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-200 tracking-wide animate-pulse">
+              Estamos cargando tus tareas, un momento por favor... 
+            </p>
+          </motion.div>
+
+          <TaskSkeleton />
+        </div>
+      ) : tasks.length === 0 || (pendingTasks.length === 0 && !searchTerm) ? (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <EmptyDashboardTasks />
+        </motion.div>
+      ) : filteredAndSortedTasks.length === 0 ? (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <NoSearchResults 
+            searchTerm={searchTerm} 
+            onClear={() => setSearchTerm("")} 
+          />
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredAndSortedTasks.map((task) => (
+              <motion.div
+                key={task._id || task.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.8, 
+                  filter: "blur(8px)",
+                  transition: { duration: 0.25 } 
+                }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              >
+                <TaskCard task={task} searchTerm={searchTerm} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
-
     </div>
   );
 };
+
+export default Dashboard;

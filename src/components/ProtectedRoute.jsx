@@ -1,24 +1,24 @@
 import { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Sidebar } from '../components/Sidebar'; // Ajusta la ruta de importación
 
 export const ProtectedRoute = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
-  if (!isAuthenticated) {
+  // Si la app está cargando y revisando el localStorage, mostramos un spinner
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFC50C]"></div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario, lo mandamos al login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <div className="flex min-h-screen bg-slate-100 font-sans">
-      {/* Sidebar fijo a la izquierda */}
-      <Sidebar />
-
-      {/* Área donde cargan el Dashboard, TaskForm, Profile, etc. */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
-        <Outlet />
-      </main>
-    </div>
-  );
+  // Si todo está OK, lo dejamos pasar al Dashboard y sus rutas hijas
+  return <Outlet />;
 };
