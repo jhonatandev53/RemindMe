@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 /* 1. INICIAR SESIÓN (LOGIN) */
 export const login = async (email, password) => {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export const login = async (email, password) => {
 /* 2. REGISTRAR USUARIO */
 export const register = async (userData) => {
   try {
-    const response = await fetch(`${API_URL}/users/register`, {
+    const response = await fetch(`${API_URL}/api/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
