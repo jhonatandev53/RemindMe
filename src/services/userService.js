@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const updateProfile = async (userId, userData, token) => {
-  const response = await fetch(`${API_URL}/users/${userId}`, {
+  const response = await fetch(`${API_URL}/api/users/${userId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
