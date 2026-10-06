@@ -4,15 +4,15 @@ import { Panel } from "../components/Panel";
 import { motion } from "framer-motion";
 import { useToast } from "../context/ToastContext";
 import { AuthContext } from "../context/AuthContext";
+import { updateProfile } from "../services/userService"; 
 
 export const Telegram = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useContext(AuthContext); // Obtenemos el usuario autenticado
+  const { user, updateUser } = useContext(AuthContext);
   const [telegramId, setTelegramId] = useState("");
   const [loading, setLoading] = useState(false);
   
   const { showToast } = useToast();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   // Sincronizar el estado local con el telegramId que viene de la Base de Datos
   useEffect(() => {
@@ -33,23 +33,9 @@ export const Telegram = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Petición PUT hacia la ruta protegida /api/users/:id
-      const response = await fetch(`${API_URL}/users/${user._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Escudo JWT validado por el authMiddleware
-        },
-        body: JSON.stringify({ telegramId })
-      });
+      // Llamada limpia y reutilizable usando el servicio centralizado
+      const updatedUser = await updateProfile(user._id, { telegramId }, token);
 
-      if (!response.ok) {
-        throw new Error("Error al actualizar el Telegram Chat ID");
-      }
-
-      const updatedUser = await response.json();
-
-      // Si en tu AuthContext tienes una función para actualizar el usuario en memoria, se actualiza:
       if (updateUser) {
         updateUser(updatedUser);
       }
@@ -57,7 +43,7 @@ export const Telegram = () => {
       showToast("¡Telegram Chat ID guardado en la base de datos! 🚀");
     } catch (error) {
       console.error("Error:", error);
-      showToast("No se pudo actualizar el Telegram ID", "error");
+      showToast(error.message || "No se pudo actualizar el Telegram ID", "error");
     } finally {
       setLoading(false);
     }
@@ -77,7 +63,7 @@ export const Telegram = () => {
           animate={{ 
             x: ["-10vw", "110vw"], 
             y: ["60vh", "15vh"], 
-            rotate: [-25, -20, -28] // Apuntando hacia adelante en su trayectoria ascendente de izquierda a derecha
+            rotate: [-25, -20, -28]
           }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0 }}
           className="absolute text-sky-400/70 dark:text-sky-400/80 drop-shadow-md"
@@ -91,7 +77,7 @@ export const Telegram = () => {
           animate={{ 
             x: ["110vw", "-10vw"], 
             y: ["10vh", "70vh"], 
-            rotate: [155, 160, 150] // Apuntando hacia adelante en su trayectoria descendente de derecha a izquierda
+            rotate: [155, 160, 150]
           }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
           className="absolute text-sky-500/70 dark:text-sky-400/80 drop-shadow-md"
@@ -105,7 +91,7 @@ export const Telegram = () => {
           animate={{ 
             x: ["-10vw", "110vw"], 
             y: ["20vh", "80vh"], 
-            rotate: [30, 35, 25] // Apuntando hacia adelante en su trayectoria descendente de izquierda a derecha
+            rotate: [30, 35, 25]
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 3 }}
           className="absolute text-sky-400/60 dark:text-sky-500/70 drop-shadow-md"
@@ -141,7 +127,7 @@ export const Telegram = () => {
         {/* GUÍA DE PASOS Y FORMULARIO */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           
-          {/* INSTRUCCIONES (2 Columnas) */}
+          {/* INSTRUCCIONES */}
           <Panel className="p-5 sm:p-6 rounded-2xl shadow-sm lg:col-span-2 flex flex-col justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-4">
@@ -174,7 +160,7 @@ export const Telegram = () => {
             </div>
           </Panel>
 
-          {/* FORMULARIO DE CONFIGURACIÓN (1 Columna - Centrado Verticalmente) */}
+          {/* FORMULARIO */}
           <Panel className="p-5 sm:p-6 rounded-2xl shadow-sm flex flex-col justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
             <form onSubmit={handleSave} className="flex flex-col gap-5">
               <div>
@@ -205,10 +191,8 @@ export const Telegram = () => {
 
         </div>
 
-        {/* CONTENEDOR DE BANNER Y GUÍA ORGANIZADOS VERTICALMENTE */}
+        {/* BANNERS INFERIORES */}
         <div className="flex flex-col gap-4">
-          
-          {/* BANNER ESTILIZADO DE GUÍA */}
           <Panel className="p-4 sm:p-5 rounded-2xl shadow-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center shrink-0 shadow-sm">
@@ -220,7 +204,6 @@ export const Telegram = () => {
                 ¿Quieres saber a detalle cómo automatizar tus alertas?
               </p>
             </div>
-            
             <button
               onClick={() => navigate('/telegram-guide')}
               className="w-full sm:w-auto py-2.5 px-5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm shadow-sky-500/25 transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2 shrink-0 group"
@@ -232,7 +215,6 @@ export const Telegram = () => {
             </button>
           </Panel>
 
-          {/* BANNER PARA IR A TELEGRAM (PÁGINA OFICIAL) */}
           <Panel className="p-4 sm:p-5 rounded-2xl shadow-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center shrink-0 shadow-sm">
@@ -244,7 +226,6 @@ export const Telegram = () => {
                 ¿Ya sabes como funciona nuestro chatbot? ¡ ve e inicialo !
               </p>
             </div>
-            
             <button
               onClick={() => window.open("https://telegram.org/", "_blank", "noopener,noreferrer")}
               className="w-full sm:w-auto py-2.5 px-5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm shadow-sky-500/25 transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2 shrink-0 group"
@@ -255,7 +236,6 @@ export const Telegram = () => {
               </svg>
             </button>
           </Panel>
-
         </div>
 
       </div>
