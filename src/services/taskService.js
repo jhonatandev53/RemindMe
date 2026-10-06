@@ -1,5 +1,5 @@
 // src/services/taskService.js
-const API_URL = import.meta.env.VITE_API_URL; // http://localhost:4000/api
+const API_URL = import.meta.env.VITE_API_URL; 
 
 // Helper privado para inyectar el token JWT en las peticiones
 const getAuthHeaders = () => {
@@ -11,7 +11,7 @@ const getAuthHeaders = () => {
 };
 
 export const getTasksService = async () => {
-  const response = await fetch(`${API_URL}/tasks`, {
+  const response = await fetch(`${API_URL}/api/tasks`, {
     method: 'GET',
     headers: getAuthHeaders()
   });
@@ -20,7 +20,7 @@ export const getTasksService = async () => {
 };
 
 export const createTaskService = async (taskData) => {
-  const response = await fetch(`${API_URL}/tasks`, {
+  const response = await fetch(`${API_URL}/api/tasks`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(taskData)
@@ -30,7 +30,7 @@ export const createTaskService = async (taskData) => {
 };
 
 export const updateTaskService = async (id, updatedData) => {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  const response = await fetch(`${API_URL}/api/tasks/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(updatedData)
@@ -40,7 +40,7 @@ export const updateTaskService = async (id, updatedData) => {
 };
 
 export const deleteTaskService = async (id) => {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  const response = await fetch(`${API_URL}/api/tasks/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
