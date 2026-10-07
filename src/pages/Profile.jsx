@@ -11,8 +11,8 @@ export const Profile = () => {
   const { user, logout } = useContext(AuthContext);
   const { showToast } = useToast();
   
-  // URL prototipo para compartir
-  const shareUrl = "https://remindme-app.vercel.app";
+  // URL oficial de producción en Vercel
+  const shareUrl = "https://remindme-red.vercel.app";
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Telegram Chat ID desde la Base de Datos
@@ -39,7 +39,7 @@ export const Profile = () => {
       transition={{ duration: 0.4 }}
       className="min-h-[calc(100vh-100px)] flex items-center justify-center px-4 sm:px-6 py-8 max-w-7xl mx-auto"
     >
-      {/* CONTENEDOR GRID DE 3 COLUMNAS EN DESKTOP (Tarjeta 1 | Línea Divisoria | Tarjeta 2) CENTRADOS */}
+      {/* CONTENEDOR GRID DE 3 COLUMNAS EN DESKTOP */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-12 items-center w-full max-w-6xl mx-auto">
 
         {/* ========================================================= */}
@@ -60,8 +60,6 @@ export const Profile = () => {
           <div className="relative z-10">
             {/* Encabezado de perfil */}
             <div className="flex flex-col items-center text-center mt-2 mb-6">
-              
-              {/* Avatar limpio sin orbe duplicado */}
               <div className="mb-3">
                 <UserAvatar user={user} size="normal" />
               </div>
@@ -151,7 +149,6 @@ export const Profile = () => {
           </div>
         </Panel>
 
-
         {/* ========================================================= */}
         {/* COLUMNA 2: LÍNEA DIVISORIA AMARILLA (SOLO EN DESKTOP)     */}
         {/* ========================================================= */}
@@ -159,16 +156,15 @@ export const Profile = () => {
           <div className="w-1.5 h-480px bg-linear-to-b from-transparent via-[#FFC50C] to-transparent rounded-full shadow-[0_0_20px_rgba(255,197,12,0.6)]" />
         </div>
 
-
         {/* ========================================================= */}
-        {/* COLUMNA 3: TARJETA DE COMPARTIR REMINDME (PROTOTIPO)      */}
+        {/* COLUMNA 3: TARJETA DE COMPARTIR REMINDME (QR REAL)        */}
         {/* ========================================================= */}
         <Panel className="p-6 sm:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md relative overflow-hidden flex flex-col justify-between h-full w-full max-w-xl mx-auto lg:mx-0">
           
           {/* Banda de acento superior con tono complementario */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-linear-to-r from-orange-500 via-[#FFC50C] to-amber-400 z-20" />
 
-          {/* Formas geométricas de fondo estilo RemindMe */}
+          {/* Formas geométricas de fondo */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
             <div className="absolute -top-12 -left-12 w-40 h-40 bg-[#FFC50C]/20 dark:bg-[#FFC50C]/10 rounded-3xl -rotate-12" />
             <div className="absolute bottom-10 -right-10 w-36 h-36 bg-amber-500/15 dark:bg-amber-500/10 rounded-3xl rotate-45" />
@@ -191,44 +187,23 @@ export const Profile = () => {
               </p>
             </div>
 
-            {/* PROTOTIPO DE CÓDIGO QR */}
+            {/* CÓDIGO QR REAL */}
             <div className="flex flex-col items-center justify-center my-4">
               <div className="relative p-4 bg-white rounded-3xl shadow-lg border-2 border-[#FFC50C]/40 group hover:border-[#FFC50C] transition-all">
-                {/* Etiqueta flotante de prototipo */}
+                {/* Etiqueta de QR Oficial */}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FFC50C] text-slate-950 font-black text-[9px] uppercase px-2.5 py-0.5 rounded-full shadow-sm tracking-wider">
-                  Prototipo QR
+                  ¡ESCANEAME! 
                 </span>
 
-                {/* SVG QR Code simulado y altamente estilizado */}
-                <div className="w-36 h-36 sm:w-40 sm:h-40 bg-slate-900 rounded-2xl p-2 flex flex-col justify-between relative overflow-hidden group-hover:scale-[1.02] transition-transform">
-                  {/* Esquinas del QR */}
-                  <div className="absolute top-3 left-3 w-8 h-8 border-4 border-[#FFC50C] rounded-lg bg-slate-950 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-[#FFC50C] rounded-xs" />
-                  </div>
-                  <div className="absolute top-3 right-3 w-8 h-8 border-4 border-[#FFC50C] rounded-lg bg-slate-950 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-[#FFC50C] rounded-xs" />
-                  </div>
-                  <div className="absolute bottom-3 left-3 w-8 h-8 border-4 border-[#FFC50C] rounded-lg bg-slate-950 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-[#FFC50C] rounded-xs" />
-                  </div>
-
-                  {/* Patrón central dinámico simulando data */}
-                  <div className="absolute inset-12 grid grid-cols-4 gap-1 opacity-80">
-                    {[...Array(16)].map((_, i) => (
-                      <div key={i} className={`rounded-xs ${i % 2 === 0 ? 'bg-[#FFC50C]' : 'bg-slate-700'}`} />
-                    ))}
-                  </div>
-
-                  {/* Logo central flotante en miniatura */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-9 h-9 bg-[#FFC50C] rounded-xl flex items-center justify-center font-black text-slate-950 text-xs shadow-md border-2 border-slate-900">
-                      RM
-                    </div>
-                  </div>
-                </div>
+                {/* Imagen del QR Real generada mediante API pública */}
+                <img 
+                  src={"/remindme-qr-code.png"} 
+                  alt="Código QR RemindMe Oficial" 
+                  className="w-36 h-36 sm:w-40 sm:h-40 rounded-xl object-contain group-hover:scale-[1.02] transition-transform"
+                />
               </div>
               <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 font-medium">
-                Escanea con la cámara para probar (Próximamente real)
+                Escanea con la cámara para abrir el sitio oficial
               </span>
             </div>
 
